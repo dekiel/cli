@@ -1,9 +1,10 @@
 package communitymodules
 
 import (
-	"github.com/olekukonko/tablewriter"
 	"os"
 	"strings"
+
+	"github.com/olekukonko/tablewriter"
 )
 
 func RenderTableForCollective(raw bool, moduleMap moduleMap) {
@@ -50,13 +51,13 @@ func convertRowToManaged(moduleMap moduleMap) [][]string {
 func RenderTableForCatalog(raw bool, moduleMap moduleMap) {
 	renderTable(raw,
 		convertRowToCatalog(moduleMap),
-		[]string{"NAME", "REPOSITORY"})
+		[]string{"NAME", "REPOSITORY", "LATEST VERSION"})
 }
 
 func convertRowToCatalog(moduleMap moduleMap) [][]string {
 	var result [][]string
 	for _, row := range moduleMap {
-		result = append(result, []string{row.Name, row.Repository})
+		result = append(result, []string{row.Name, row.Repository, row.LatestVersion})
 	}
 	return result
 }
@@ -70,9 +71,7 @@ func renderTable(raw bool, modulesData [][]string, headers []string) {
 	} else {
 
 		var table [][]string
-		for _, row := range modulesData {
-			table = append(table, row)
-		}
+		table = append(table, modulesData...)
 
 		twTable := setTable(table)
 		twTable.SetHeader(headers)
