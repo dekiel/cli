@@ -10,6 +10,7 @@ import (
 	"github.com/kyma-project/cli.v3/internal/kube"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 )
@@ -40,7 +41,7 @@ func getConfig(ctx context.Context, client kube.Client) (*RegistryConfig, error)
 		return nil, err
 	}
 
-	secretConfig, err := getRegistrySecretData(ctx, client.Static(), dockerRegistry.Status.SecretName, dockerRegistry.GetNamespace())
+	secretConfig, err := getRegistrySecretData(ctx, client.Static(), dockerRegistry.Status.InternalAccess.SecretName, dockerRegistry.GetNamespace())
 	if err != nil {
 		return nil, err
 	}
@@ -51,14 +52,14 @@ func getConfig(ctx context.Context, client kube.Client) (*RegistryConfig, error)
 	}
 
 	return &RegistryConfig{
-		SecretName: dockerRegistry.Status.SecretName,
+		SecretName: dockerRegistry.Status.InternalAccess.SecretName,
 		SecretData: secretConfig,
 		PodMeta:    podMeta,
 	}, nil
 }
 
 type SecretData struct {
-	DockerConfigJson string
+	DockerConfigJSON string
 	Username         string
 	Password         string
 	PullRegAddr      string
@@ -73,7 +74,7 @@ func getRegistrySecretData(ctx context.Context, client kubernetes.Interface, sec
 	}
 
 	return &SecretData{
-		DockerConfigJson: string(registrySecret.Data[".dockerconfigjson"]),
+		DockerConfigJSON: string(registrySecret.Data[".dockerconfigjson"]),
 		Username:         string(registrySecret.Data["username"]),
 		Password:         string(registrySecret.Data["password"]),
 		PullRegAddr:      string(registrySecret.Data["pullRegAddr"]),
@@ -156,7 +157,7 @@ func getDockerRegistry(ctx context.Context, c dynamic.Interface) (*DockerRegistr
 
 	for _, item := range list.Items {
 		var dockerRegistry DockerRegistry
-		err = kube.FromUnstructured(&item, &dockerRegistry)
+		err = runtime.DefaultUnstructuredConverter.FromUnstructured(item.Object, &dockerRegistry)
 		if err != nil {
 			return nil, err
 		}
